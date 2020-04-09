@@ -5,12 +5,14 @@ const port = 3000;
 const https = require('https');
 const cheerio = require('cheerio');
 
+const recurseLimit = 5;
+
 var app = express();
 var requestCookies = '';
 
 cron.schedule('*/1 * * * *', () => {
-  console.log('Updating calendar data');
-  updateData();
+  // console.log('Updating calendar data');
+  // updateData();
 });
 
 app.get('/', function (req, res) {
@@ -49,15 +51,26 @@ function setCookies() {
   requestCookies = cookies.join('; ');
 }
 
-function updateData(lastId = 'null') {
+function updateData(lastId = 'null', lastPostTime = 'null', iteration = 0) {
+  if (iteration >= recurseLimit) {
+    //Stop, that's enough
+    console.log('Data update finished, last id was: ' + lastId);
+    console.log(iteration);
+    return;
+  }
   var feedOptions = {
     hostname: 'runkeeper.com',
-    path: '/moreFeed?showAvatars=false&count=9&lastFeedItemPostTime=null&feedOwnerUrl=1569940756&includeFriends=true&lastFeedItemID=' + lastId,
+    path: '/moreFeed?showAvatars=false&count=9&feedOwnerUrl=1569940756&includeFriends=true&lastFeedItemID=' + lastId + '&lastFeedItemPostTime=' + lastPostTime,
     method: 'GET',
     headers: { 'Cookie': requestCookies }
   }
+  console.log('Running data request with path: ' + feedOptions.path);
   let req = https.request(feedOptions, function (res) {
     res.setEncoding('utf8');
+
+    //to-do save renewed cookies to DB
+    //setCookies();
+
     let content = '';
     res.on('data', function (response) {
       content = content + response;
@@ -66,34 +79,47 @@ function updateData(lastId = 'null') {
 
       let $ = cheerio.load(content);
       let elements = $('.feedItemContainer').each((i, elem) => {
+        let feedItemId = elem.attribs['data-feeditemid'];
+        let feedItemPostTime = elem.attribs['data-feeditemposttime'];
         let time = elem.attribs['data-feeditemposttime'].split('T').join(' ');
         let userElem = $('.mainText .usernameLinkNoSpace', elem);
         let userId = userElem[0].attribs['href'].split('/')[2];
         let name = userElem.first().text();
         let activityId = $('.responseFormContainer input[name="parentObjectId"]', elem).first().val();
-        // console.log(activityId);
+
+        //Remember new values for our next iteration
+        lastId = feedItemId;
+        lastPostTime = feedItemPostTime;
+
+        console.log(feedItemId + '-' + name + '-' + time + '-' + activityId);
+
         if (activityId.length != 10)
+          //This entry is not a real activity, do not insert to DB
           return;
-        console.log(userId + '-' + name + '-' + time + '-' + activityId);
-        db.run('INSERT INTO activities(userId, name, date, rkId) VALUES\
-        ("'+userId+'", "'+name+'", "'+time+'", "'+activityId+'")\
-        ', [], function(err) {
+        db.run('INSERT INTO activities(userId, name, date, rkId, rkFeedId, rkFeedTime) VALUES\
+        ("'+ userId + '", "' + name + '", "' + time + '", "' + activityId + '", "' + feedItemId + '", "' + feedItemPostTime + '")\
+        ', [], function (err) {
+          //Ignore the error, it's PROBABLY unique constraint failing.
           console.log(err);
         });
+
+
       });
-      //setCookies();
-      console.log('done');
+
+      updateData(lastId, lastPostTime, iteration + 1);
     });
+
   });
   req.on('error', function (res) {
     console.log('HTTP request error: ');
     console.log(res);
   });
   req.end();
+
 }
 
 app.listen(port, () => console.log(`Listening at http://localhost:${port}`))
 
-
+//Give some time for DB initialization
 setTimeout(setCookies, 5000);
 setTimeout(updateData, 10000);
