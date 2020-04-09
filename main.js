@@ -4,13 +4,9 @@ const express = require('express');
 const port = 3000;
 const https = require('https');
 const cheerio = require('cheerio');
-var feedOptions = {
-  hostname: 'runkeeper.com',
-  path: '/moreFeed?showAvatars=false&count=9&lastFeedItemID=null&lastFeedItemPostTime=null&feedOwnerUrl=1569940756&includeFriends=true',
-  method: 'GET'
-}
 
 var app = express();
+var requestCookies = '';
 
 cron.schedule('*/1 * * * *', () => {
   console.log('Updating calendar data');
@@ -35,18 +31,8 @@ function getActivities(res) {
   });
 };
 
-function updateCookie() {
-  db.all('SELECT * FROM cookies;', [], (err, rows) => {
-    if (err) {
-      console.error('Error retrieving cookie: ' + err.message);
-    }
-    let cookieString = rows.map(x => x.value).join('; ');
-    // console.log(cookieString);
-    feedOptions.headers = { 'Cookie': cookieString };
-  });
-}
-
 function setCookies() {
+  //to-do replace with a function parameter
   let cookies = [
     'checker=TO7ssklnsyzgFqKrXXPpRyUf;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
     'lli=1586433365887;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
@@ -58,13 +44,18 @@ function setCookies() {
   db.run('DELETE FROM cookies;');
   cookies.forEach(function (elem) {
     let query = 'INSERT INTO cookies (value) VALUES (\'' + elem + '\');';
-    // console.log(query);
     db.run(query);
   });
-  setTimeout(updateCookie, 3000);
+  requestCookies = cookies.join('; ');
 }
 
-function updateData() {
+function updateData(lastId = 'null') {
+  var feedOptions = {
+    hostname: 'runkeeper.com',
+    path: '/moreFeed?showAvatars=false&count=9&lastFeedItemPostTime=null&feedOwnerUrl=1569940756&includeFriends=true&lastFeedItemID=' + lastId,
+    method: 'GET',
+    headers: { 'Cookie': requestCookies }
+  }
   let req = https.request(feedOptions, function (res) {
     res.setEncoding('utf8');
     let content = '';
@@ -95,7 +86,7 @@ function updateData() {
     });
   });
   req.on('error', function (res) {
-    console.log('error');
+    console.log('HTTP request error: ');
     console.log(res);
   });
   req.end();
@@ -104,5 +95,5 @@ function updateData() {
 app.listen(port, () => console.log(`Listening at http://localhost:${port}`))
 
 
-updateCookie();
-setTimeout(updateData, 5000);
+setTimeout(setCookies, 5000);
+setTimeout(updateData, 10000);
