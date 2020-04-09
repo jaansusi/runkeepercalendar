@@ -13,19 +13,17 @@ var feedOptions = {
 var app = express();
 
 cron.schedule('*/1 * * * *', () => {
-  // console.log('Updating calendar data');
-  // updateData();
+  console.log('Updating calendar data');
+  updateData();
 });
 
 app.get('/', function (req, res) {
   getActivities(res);
 });
 
-app.get('/sampleData', function (req, res) {
-  db.run('INSERT INTO activities(name, date, rkId) VALUES\
-  ("Test Name", "2020-04-09 10:02:00", 12345),\
-  ("Name Test", "2020-04-09 10:02:00", 54321)');
-  res.send('Database populated.');
+app.get('/getManual', function (req, res) {
+  updateData();
+  res.send('Done');
 });
 
 function getActivities(res) {
@@ -37,49 +35,74 @@ function getActivities(res) {
   });
 };
 
-function updateData() {
-  let data = requestData();
-  db.run('INSERT INTO activities(name, date, rkId) VALUES\
-  ("Test Name", datetime(\'now\'), 12345)\
-  ');
-}
-
-function updateCookie(callback) {
-  db.get('SELECT * FROM cookies;', [], (err, row) => {
+function updateCookie() {
+  db.all('SELECT * FROM cookies;', [], (err, rows) => {
     if (err) {
       console.error('Error retrieving cookie: ' + err.message);
     }
-    feedOptions.headers = { 'Cookie': row.value };
+    let cookieString = rows.map(x => x.value).join('; ');
+    // console.log(cookieString);
+    feedOptions.headers = { 'Cookie': cookieString };
   });
 }
 
-function setCookie() {
-  db.run('INSERT INTO cookies (value) VALUES ("%csrf=AAAAAfs6k8muhcQZLf3RrnA1gcf8jFQ6RaaOq6z55xxFzyHdyRQKIfyegpbzL_ncGd55U5lXaYROpI4tj3O679NWIKke6qEVTwW0LSswiiu2Y4pe7kzcOnyhVxI7glBD492QBqhSs8AYk3tD-5Ih0nEh_-LRkfeZ-mfQ5oYIAeVREW2yrVB2Yj7Xmb_2rCLZfTA6kgKEgmU4N66SohrHSlgRlnL0qiSZE3hjLcUqQA==;expires=Sun, 09-Apr-2023 11:29:42 GMT;path=/;HttpOnly;secure; SameSite=Strict");');
-  setTimeout(updateCookie, 3000)
+function setCookies() {
+  let cookies = [
+    'checker=TO7ssklnsyzgFqKrXXPpRyUf;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    'lli=1586433365887;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    '%rlc=AAAAAcu2xV45pPl0sHyI4Y2Wn3inpuN0f8R0UslaHsHRUKL9jMBMg51_RPj1msE4tgUozEOOvYlP_A9HM1N9JgRb5fWeOOhf7Gv8EYLeh7n-EU_m7yBJi4J5iRFpwfcDU1HuOe-SLujCQFHD7j_OqloQw-ychbtkuwOrz6wek0cQhmAFJC_hBG33ElZI5N2RENWVO4qgpnSiagn20cHUCplKDuyOWiQ8j7ayWv6vB6pNxlU1E_TfhgaSfViT_aPRT3Xwqw==;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    '%csrf=AAAAAfHtXOHZeUZ2UfYNxb9bupkIOcY5Du9ubHnvf9fRCQqPrEkIkDfYDdzRKBqYkPVse8KaobKQOQD2GKrzWRu3GqGrra2Og8fnMMNWvH8gPVaRLJLtz0NV-2mVWmEAKHrUOIyOapgm0s-LCioE0WVs0uSeGxuv0VPI_lbojBtBoGEiYmHTv9K0VzfnDWeRH5vSR82-Mzn3D-NDWvX9zQeJPX2FHGBJECqwlVmYFg==;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    '%rlt=AAAAATIX9dxPOhJbwbDaljc8TTSZ8sjYDWgKTRISQyqll56zj_oVWJEBTe0RtB3w28j7iLarlFTgFzfMUKJFakHDXY_hGCIlCYvyhbqRhG2_v5jmKL_55avQ1KxS6HzUe8KmNlXts5Xpx8w7gKpslJBFqQQBLSfYXrOus8AYgD7Nfotd6FrGmVJlz-iDIULUN5NtEs1dmU93Jn4-30qUq6Pxi0_mvnyKxucNJ4ap0Qx2qEBo_vHwTbgIi4K7zzPY1Chu30BEyeiP;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict'
+  ];
+
+  db.run('DELETE FROM cookies;');
+  cookies.forEach(function (elem) {
+    let query = 'INSERT INTO cookies (value) VALUES (\'' + elem + '\');';
+    // console.log(query);
+    db.run(query);
+  });
+  setTimeout(updateCookie, 3000);
 }
 
-function requestData() {
+function updateData() {
   let req = https.request(feedOptions, function (res) {
     res.setEncoding('utf8');
+    let content = '';
     res.on('data', function (response) {
-      var $ = cheerio.load(response);
-      var elements = $('.feedItemContainer').each((i, elem) => {
-        var time = elem.attribs['data-feeditemposttime'];
-        var user = $('.usernameLinkNoSpace', elem);
-        user.each((i, elem) => {
-          console.log(elem.attribs['href'].split('/')[2]);
+      content = content + response;
+    });
+    res.on('end', () => {
+
+      let $ = cheerio.load(content);
+      let elements = $('.feedItemContainer').each((i, elem) => {
+        let time = elem.attribs['data-feeditemposttime'].split('T').join(' ');
+        let userElem = $('.mainText .usernameLinkNoSpace', elem);
+        let userId = userElem[0].attribs['href'].split('/')[2];
+        let name = userElem.first().text();
+        let activityId = $('.responseFormContainer input[name="parentObjectId"]', elem).first().val();
+        // console.log(activityId);
+        if (activityId.length != 10)
+          return;
+        console.log(userId + '-' + name + '-' + time + '-' + activityId);
+        db.run('INSERT INTO activities(userId, name, date, rkId) VALUES\
+        ("'+userId+'", "'+name+'", "'+time+'", "'+activityId+'")\
+        ', [], function(err) {
+          console.log(err);
         });
       });
-    })
+      //setCookies();
+      console.log('done');
+    });
   });
   req.on('error', function (res) {
     console.log('error');
     console.log(res);
   });
   req.end();
-  setCookie();
 }
 
 app.listen(port, () => console.log(`Listening at http://localhost:${port}`))
 
+
+updateCookie();
 setTimeout(updateData, 5000);

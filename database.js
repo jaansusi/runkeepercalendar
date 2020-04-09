@@ -8,9 +8,9 @@ let db = new sqlite3.Database('./db/calendar.db', (err) => {
     db.run('CREATE TABLE IF NOT EXISTS activities(\
         id INTEGER PRIMARY KEY,\
         name STRING NOT NULL,\
-        userId INTEGER NULL,\
+        userId STRING NOT NULL,\
         date DATETIME NOT NULL,\
-        rkId INTEGER NOT NULL\
+        rkId STRING NOT NULL UNIQUE\
         );');
     db.run('CREATE TABLE IF NOT EXISTS cookies(\
         id INTEGER PRIMARY KEY,\
