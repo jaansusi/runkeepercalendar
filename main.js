@@ -4,10 +4,15 @@ const express = require('express');
 const port = 3000;
 const https = require('https');
 const cheerio = require('cheerio');
+const path = require('path');
 
 const recurseLimit = 5;
 
 var app = express();
+// app.set('views', './views');
+// app.set('view engine', 'pug');
+app.use(express.static('public/'));
+
 var requestCookies = '';
 
 cron.schedule('*/1 * * * *', () => {
@@ -15,23 +20,25 @@ cron.schedule('*/1 * * * *', () => {
   // updateData();
 });
 
-app.get('/', function (req, res) {
-  getActivities(res);
-});
-
-app.get('/getManual', function (req, res) {
-  updateData();
-  res.send('Done');
-});
-
-function getActivities(res) {
-  db.all('SELECT * FROM activities;', [], (err, rows) => {
+app.get('/getData', function (req, res) {
+  db.all('SELECT name, date FROM activities;', [], (err, rows) => {
     if (err) {
       console.error('Error retrieving activities: ' + err.message);
     }
-    res.json(rows);
+    let response = [];
+    rows.map(x => {
+      let temp = new Object();
+      temp.title = x.name.split(' ')[0];
+      temp.start = x.date.split(' ')[0];
+      response.push(temp);
+    });
+    res.json(response);
   });
-};
+});
+
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname + '/static/main.html'));
+});
 
 function setCookies() {
   //to-do replace with a function parameter
@@ -122,4 +129,4 @@ app.listen(port, () => console.log(`Listening at http://localhost:${port}`))
 
 //Give some time for DB initialization
 setTimeout(setCookies, 5000);
-setTimeout(updateData, 10000);
+//setTimeout(updateData, 10000);
