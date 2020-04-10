@@ -21,14 +21,14 @@ cron.schedule('*/1 * * * *', () => {
 });
 
 app.get('/getData', function (req, res) {
-  db.all('SELECT name, date FROM activities;', [], (err, rows) => {
+  db.all('SELECT name, date, activityType, distance FROM activities;', [], (err, rows) => {
     if (err) {
       console.error('Error retrieving activities: ' + err.message);
     }
     let response = [];
     rows.map(x => {
       let temp = new Object();
-      temp.title = x.name.split(' ')[0];
+      temp.title = x.name.split(' ')[0] + ' - ' + x.activityType + ': ' + x.distance + ' km';
       temp.start = x.date.split(' ')[0];
       response.push(temp);
     });
@@ -36,17 +36,28 @@ app.get('/getData', function (req, res) {
   });
 });
 
+app.get('/getAll', function (req, res) {
+  db.all('SELECT * FROM activities;', [], (err, rows) => {
+    res.json(rows);
+  });
+});
+
 app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname + '/static/main.html'));
+});
+
+app.get('/download', function (req, res) {
+  updateData();
+  res.send("OK");
 });
 
 function setCookies() {
   //to-do replace with a function parameter
   let cookies = [
-    'checker=TO7ssklnsyzgFqKrXXPpRyUf;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
-    'lli=1586433365887;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    'checker=TO7ssklnsyzgFqKrXXPpRyUf;expires=Mon, 10-Apr-2023 18:42:56 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    'lli=1586544176944;expires=Mon, 10-Apr-2023 18:42:56 GMT;path=/;HttpOnly;secure; SameSite=Strict',
     '%rlc=AAAAAcu2xV45pPl0sHyI4Y2Wn3inpuN0f8R0UslaHsHRUKL9jMBMg51_RPj1msE4tgUozEOOvYlP_A9HM1N9JgRb5fWeOOhf7Gv8EYLeh7n-EU_m7yBJi4J5iRFpwfcDU1HuOe-SLujCQFHD7j_OqloQw-ychbtkuwOrz6wek0cQhmAFJC_hBG33ElZI5N2RENWVO4qgpnSiagn20cHUCplKDuyOWiQ8j7ayWv6vB6pNxlU1E_TfhgaSfViT_aPRT3Xwqw==;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
-    '%csrf=AAAAAfHtXOHZeUZ2UfYNxb9bupkIOcY5Du9ubHnvf9fRCQqPrEkIkDfYDdzRKBqYkPVse8KaobKQOQD2GKrzWRu3GqGrra2Og8fnMMNWvH8gPVaRLJLtz0NV-2mVWmEAKHrUOIyOapgm0s-LCioE0WVs0uSeGxuv0VPI_lbojBtBoGEiYmHTv9K0VzfnDWeRH5vSR82-Mzn3D-NDWvX9zQeJPX2FHGBJECqwlVmYFg==;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict',
+    '%csrf=AAAAAQSDfqPRssYSswojmal1QHWJ6TPOnr8mvcjZCK421vd5AFv8ovUPyiGleJyPK5-IhHwLGpEKDSa2VE5dXC55WHJSDTD4mfM-A6lSbdfGF9mpHvWNN-I2Ggl3pfwy9I1xPewZpuNkbigHmT7F7q_jbYYOgTJnEKGwPkM2ZgwTV4_Lwk-fkUXq34DIT3YkE1nZmqk0ZszNwhgsJepiwhd6EYFYLWV8JRAyfITW;expires=Mon, 10-Apr-2023 18:42:57 GMT;path=/;HttpOnly;secure; SameSite=Strict',
     '%rlt=AAAAATIX9dxPOhJbwbDaljc8TTSZ8sjYDWgKTRISQyqll56zj_oVWJEBTe0RtB3w28j7iLarlFTgFzfMUKJFakHDXY_hGCIlCYvyhbqRhG2_v5jmKL_55avQ1KxS6HzUe8KmNlXts5Xpx8w7gKpslJBFqQQBLSfYXrOus8AYgD7Nfotd6FrGmVJlz-iDIULUN5NtEs1dmU93Jn4-30qUq6Pxi0_mvnyKxucNJ4ap0Qx2qEBo_vHwTbgIi4K7zzPY1Chu30BEyeiP;expires=Sun, 09-Apr-2023 11:56:05 GMT;path=/;HttpOnly;secure; SameSite=Strict'
   ];
 
@@ -89,6 +100,16 @@ function updateData(lastId = 'null', lastPostTime = 'null', iteration = 0) {
         let feedItemId = elem.attribs['data-feeditemid'];
         let feedItemPostTime = elem.attribs['data-feeditemposttime'];
         let time = elem.attribs['data-feeditemposttime'].split('T').join(' ');
+        let mainText = $('.mainText', elem).first().text().trim().split(' ').filter(function (el) {
+          return el.trim() != '';
+        });
+        if (mainText.length > 4) {
+          var distance = mainText[mainText.length - 4];
+          var activityType = mainText[mainText.length - 2];
+        } else {
+          //Not a real activity
+          return;
+        }
         let userElem = $('.mainText .usernameLinkNoSpace', elem);
         let userId = userElem[0].attribs['href'].split('/')[2];
         let name = userElem.first().text();
@@ -98,16 +119,17 @@ function updateData(lastId = 'null', lastPostTime = 'null', iteration = 0) {
         lastId = feedItemId;
         lastPostTime = feedItemPostTime;
 
-        console.log(feedItemId + '-' + name + '-' + time + '-' + activityId);
+        console.log(name + '-' + activityType + '-' + distance + '-' + activityId);
 
-        if (activityId.length != 10)
+        if (activityId && activityId.length != 10)
           //This entry is not a real activity, do not insert to DB
           return;
-        db.run('INSERT INTO activities(userId, name, date, rkId, rkFeedId, rkFeedTime) VALUES\
-        ("'+ userId + '", "' + name + '", "' + time + '", "' + activityId + '", "' + feedItemId + '", "' + feedItemPostTime + '")\
-        ', [], function (err) {
+        console.log('inserting');
+        db.run('INSERT INTO activities(userId, name, date, rkId, rkFeedId, rkFeedTime, activityType, distance) VALUES\
+        ("'+ userId + '", "' + name + '", "' + time + '", "' + activityId + '", "' + feedItemId + '", "' + feedItemPostTime + '", "' + activityType + '", ' + parseFloat(distance) + ')',
+        [], function (err) {
           //Ignore the error, it's PROBABLY unique constraint failing.
-          console.log(err);
+          // console.log(err);
         });
 
 

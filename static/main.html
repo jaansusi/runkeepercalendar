@@ -1,37 +1,44 @@
 <!DOCTYPE html>
 <html lang='en'>
-  <head>
-    <meta charset='utf-8' />
 
-    <link href='fullcalendar/core/main.css' rel='stylesheet' />
-    <link href='fullcalendar/daygrid/main.css' rel='stylesheet' />
+<head>
+  <meta charset='utf-8' />
 
-    <script src='fullcalendar/core/main.js'></script>
-    <script src='fullcalendar/daygrid/main.js'></script>
+  <link href='fullcalendar/core/main.css' rel='stylesheet' />
+  <link href='fullcalendar/daygrid/main.css' rel='stylesheet' />
 
-    <script>
-      const Http = new XMLHttpRequest();
-      const url = '/getData';
-      Http.open('GET', url);
-      document.addEventListener('DOMContentLoaded', function() {
+  <script src='fullcalendar/core/main.js'></script>
+  <script src='fullcalendar/daygrid/main.js'></script>
 
-        Http.send();
-        
-      });
-      Http.onreadystatechange= function() {
+  <script>
+    const Http = new XMLHttpRequest();
+    const url = '/getData';
+    Http.open('GET', url);
+    document.addEventListener('DOMContentLoaded', function () {
 
+      Http.send();
+
+    });
+    Http.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
-          plugins: [ 'dayGrid' ],
+          plugins: ['dayGrid'],
           events: JSON.parse(this.responseText)
         });
         calendar.render();
+
+      } else {
+        document.getElementById('calendar').innerHTML = "Didn't work";
       }
-    </script>
-  </head>
-  <body>
+    }
+  </script>
+</head>
 
-    <div id='calendar'></div>
+<body>
 
-  </body>
+  <div id='calendar'></div>
+
+</body>
+
 </html>

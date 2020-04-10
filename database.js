@@ -12,7 +12,9 @@ let db = new sqlite3.Database('./db/calendar.db', (err) => {
         date DATETIME NOT NULL,\
         rkId STRING NOT NULL UNIQUE,\
         rkFeedId STRING NOT NULL UNIQUE,\
-        rkFeedTime STRING NOT NULL\
+        rkFeedTime STRING NOT NULL,\
+        activityType STRING NOT NULL,\
+        distance REAL NOT NULL \
         );');
     db.run('CREATE TABLE IF NOT EXISTS cookies(\
         id INTEGER PRIMARY KEY,\
