@@ -6,7 +6,7 @@ const https = require('https');
 const cheerio = require('cheerio');
 const path = require('path');
 
-const recurseLimit = 5;
+const recurseLimit = 15;
 
 var app = express();
 // app.set('views', './views');
@@ -15,9 +15,9 @@ app.use(express.static('public/'));
 
 var requestCookies = '';
 
-cron.schedule('*/1 * * * *', () => {
-  // console.log('Updating calendar data');
-  // updateData();
+cron.schedule('0 * * * *', () => {
+  console.log('Updating calendar data');
+  updateData();
 });
 
 app.get('/getData', function (req, res) {
@@ -119,7 +119,7 @@ function updateData(lastId = 'null', lastPostTime = 'null', iteration = 0) {
         lastId = feedItemId;
         lastPostTime = feedItemPostTime;
 
-        console.log(name + '-' + activityType + '-' + distance + '-' + activityId);
+        console.log(lastPostTime.split('T')[0] + '-' + name + '-' + activityType + '-' + distance + '-' + activityId);
 
         if (activityId && activityId.length != 10)
           //This entry is not a real activity, do not insert to DB
