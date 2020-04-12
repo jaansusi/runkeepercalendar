@@ -59,7 +59,6 @@
         });
         // chartData.sort((a, b) => a - b);
         console.log(chartData);
-        console.log(Object.values(chartData).map(x => x['cycling']));
         let walkData = [];
         Object.keys(chartData).forEach(name => {
           console.log(chartData[name]);
@@ -73,12 +72,6 @@
           data: {
             labels: Object.keys(chartData),
             datasets: [{
-              label: 'Cycling',
-              data: Object.values(chartData).map(x => x['cycling']),
-              backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)'],
-              borderWidth: 1,
-              hidden: true
-            }, {
               label: 'Walking',
               data: Object.values(chartData).map(x => x['walking']),
               backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)'],
@@ -88,6 +81,18 @@
               data: Object.values(chartData).map(x => x['running']),
               backgroundColor: ['rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)'],
               borderWidth: 1
+            }, {
+              label: 'Cycling',
+              data: Object.values(chartData).map(x => x['cycling']),
+              backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+              borderWidth: 1,
+              hidden: true
+            }, {
+              label: 'Hiking',
+              data: Object.values(chartData).map(x => x['hiking']),
+              backgroundColor: ['rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+              borderWidth: 1,
+              hidden: true
             }
             ]
           },
