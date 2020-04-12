@@ -21,18 +21,12 @@ cron.schedule('0 * * * *', () => {
 });
 
 app.get('/getData', function (req, res) {
-  db.all('SELECT name, date, activityType, distance FROM activities;', [], (err, rows) => {
+  db.all('SELECT name, date, activityType, distance FROM activities WHERE date BETWEEN date("2020-04-01") AND date("2020-04-30");', [], (err, rows) => {
     if (err) {
       console.error('Error retrieving activities: ' + err.message);
     }
-    let response = [];
-    rows.map(x => {
-      let temp = new Object();
-      temp.title = x.name.split(' ')[0] + ' - ' + x.activityType + ': ' + x.distance + ' km';
-      temp.start = x.date.split(' ')[0];
-      response.push(temp);
-    });
-    res.json(response);
+    
+    res.json(rows);
   });
 });
 
