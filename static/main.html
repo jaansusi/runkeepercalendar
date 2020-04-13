@@ -47,14 +47,15 @@
         let chartData = [];
         data.map(x => {
           // console.log(x);
-          if (!chartData[x.name]) {
+          let name = x.name.split(' ')[0];
+          if (!chartData[name]) {
             let tempObject = [];
             tempObject[x.activityType] = x.distance;
-            chartData[x.name] = tempObject;
+            chartData[name] = tempObject;
           } else {
-            if (!chartData[x.name][x.activityType])
-              chartData[x.name][x.activityType] = 0;
-            chartData[x.name][x.activityType] += x.distance;
+            if (!chartData[name][x.activityType])
+              chartData[name][x.activityType] = 0;
+            chartData[name][x.activityType] += x.distance;
           }
         });
         // chartData.sort((a, b) => a - b);
@@ -106,6 +107,39 @@
             }
           }
         });
+
+
+        //Render 2nd chart
+        let daysData = [];
+        data.forEach(x => {
+          if (!daysData[x.name])
+            daysData[x.name] = new Set();
+          daysData[x.name].add(x.date.split(' ')[0]);
+        });
+        console.log(daysData);
+        var ctx = document.getElementById('myChart2').getContext('2d');
+        var myChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(daysData),
+            datasets: [{
+              label: 'Activity days',
+              data: Object.values(daysData).map(x => x.size),
+              backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+              borderWidth: 1
+            }
+            ]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true
+                }
+              }]
+            }
+          }
+        });
       }
     }
   </script>
@@ -113,9 +147,14 @@
 
 <body>
   <div style="display: flex;">
-    <div style="flex: 1; float: left; width: 50vw; height: 50vh;" id='calendar'></div>
-    <div class="chart-container" style="flex: 1; position: relative; height:25vh; width:50vw">
-      <canvas id="myChart"></canvas>
+    <div style="flex: 2; float: left; width: 50vw; height: 50vh;" id='calendar'></div>
+    <div style="flex: 2; width: 50vw; height: 100vh;" id="charts">
+      <div class="chart-container" style="position: relative; height:50%; width:100%">
+        <canvas id="myChart2"></canvas>
+      </div>
+      <div class="chart-container" style="position: relative; height:50%; width:100%">
+        <canvas id="myChart"></canvas>
+      </div>
     </div>
   </div>
 
