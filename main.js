@@ -148,9 +148,6 @@ function updateData(lastId = 'null', lastPostTime = 'null', iteration = recurseL
         lastId = feedItemId;
         lastPostTime = feedItemPostTime;
 
-        // Log out the parsed event information
-        console.log(lastPostTime.split('T')[0] + '-' + name + '-' + activityType + '-' + distance + '-' + activityId);
-
         if (activityId && activityId.length != 10)
           // This entry is not a real activity, do not insert to DB
           return;
@@ -159,9 +156,12 @@ function updateData(lastId = 'null', lastPostTime = 'null', iteration = recurseL
         db.run('INSERT INTO activities(userId, name, date, rkId, rkFeedId, rkFeedTime, activityType, distance) VALUES\
         ("'+ userId + '", "' + name + '", "' + time + '", "' + activityId + '", "' + feedItemId + '", "' + feedItemPostTime + '", "' + activityType + '", ' + parseFloat(distance) + ')',
           [], function (err) {
-            // Log the outcome of the request
-            //to-do Update if already exists?
+            // Log out the parsed event information
+            console.log(lastPostTime.split('T')[0] + '-' + name + '-' + activityType + '-' + distance + '-' + activityId);
+
+            // Log the outcome of DB insertion
             if (err)
+              //to-do Update if already exists?
               console.log('Already exists in DB');
             else
               console.log('Inserted to DB');
