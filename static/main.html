@@ -26,8 +26,13 @@
     Http.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         let data = JSON.parse(this.responseText);
+        console.log('Full data:');
+        console.log(data);
 
-        // Modify data and render calendar
+        // -----------------------------------------------
+        // Modify data and render activity calendar
+        // -----------------------------------------------
+        
         let calendarData = [];
         data.map(x => {
           let temp = new Object();
@@ -43,11 +48,49 @@
         });
         calendar.render();
 
-        // Render chart
-        console.log(data);
+        // -----------------------------------------------
+        // Render daily activity chart
+        // -----------------------------------------------
+
+        let daysData = [];
+        data.forEach(x => {
+          let name = x.name.split(' ')[0];
+          if (!daysData[name])
+            daysData[name] = new Set();
+          daysData[name].add(x.date.split(' ')[0]);
+        });
+        console.log('Days data:');
+        console.log(daysData);
+        var ctx = document.getElementById('dayChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(daysData),
+            datasets: [{
+              label: 'Activity days',
+              data: Object.values(daysData).map(x => x.size),
+              backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+              borderWidth: 1
+            }
+            ]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true
+                }
+              }]
+            }
+          }
+        });
+
+        // -----------------------------------------------
+        // Render distance chart
+        // -----------------------------------------------
+
         let chartData = [];
         data.map(x => {
-          // console.log(x);
           let name = x.name.split(' ')[0];
           if (!chartData[name]) {
             let tempObject = [];
@@ -61,15 +104,15 @@
         });
         //to-do Find a way to sort custom indexed array
         // chartData.sort((a, b) => a - b);
+        console.log('Distance data:');
         console.log(chartData);
         let walkData = [];
         Object.keys(chartData).forEach(name => {
-          console.log(chartData[name]);
           Object.keys(chartData[name]).forEach(activity => {
             chartData[name][activity] = Math.round((chartData[name][activity] + Number.EPSILON) * 100) / 100
           });
         });
-        var ctx = document.getElementById('dayChart').getContext('2d');
+        var ctx = document.getElementById('distanceChart').getContext('2d');
         var myChart = new Chart(ctx, {
           type: 'bar',
           data: {
@@ -96,39 +139,6 @@
               backgroundColor: ['rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 0.2)'],
               borderWidth: 1,
               hidden: true
-            }
-            ]
-          },
-          options: {
-            scales: {
-              yAxes: [{
-                ticks: {
-                  beginAtZero: true
-                }
-              }]
-            }
-          }
-        });
-
-
-        //Render 2nd chart
-        let daysData = [];
-        data.forEach(x => {
-          if (!daysData[x.name])
-            daysData[x.name] = new Set();
-          daysData[x.name].add(x.date.split(' ')[0]);
-        });
-        console.log(daysData);
-        var ctx = document.getElementById('distanceChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: Object.keys(daysData),
-            datasets: [{
-              label: 'Activity days',
-              data: Object.values(daysData).map(x => x.size),
-              backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 0.2)'],
-              borderWidth: 1
             }
             ]
           },
