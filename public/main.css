@@ -1,0 +1,22 @@
+body {
+    margin: 1vh 1vw 1vh 1vw;
+}
+.flex-container {
+    display: flex;
+}
+.chart-container {
+    position: relative; 
+    height:50%; 
+    width:100%;
+}
+#calendar {
+    flex: 2; 
+    float: left; 
+    width: 49vw; 
+    height: 98vh;
+}
+#charts {
+    flex: 2; 
+    width: 49vw; 
+    height: 98vh;
+}
